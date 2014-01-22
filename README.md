@@ -10,7 +10,9 @@ Required Software:
   Microsoft Windows SDK
 
 Before we do anything, we need to set up the directory tree cmake is expecting. (A sample file structure is available on this git repo.) It should look like this:
+
   MSVC_3RDPARTY_ROOT /
+  
     3rdParty.x64 /
       bin /         (included in downloaded file)
       include /     (included in downloaded file)
@@ -25,7 +27,7 @@ Before we do anything, we need to set up the directory tree cmake is expecting. 
           lib /      (installed later)
         SimGear /
         FlightGear /
-
+        
 1. If you have downloaded the structure from this git repo, download boost(1_53_0) from the boost website and place the boost file(boost_1_53_0) in the MSVC_3RDPARTY_ROOT. If not, go to: "http://wiki.flightgear.org/Building_using_CMake_-_Windows" and scroll to the "64-bits" section. Download the 64-bit package for 3rdParty. The 3rdParty package will have an older version of boost. Replace it with a newer boost(1_53_0) downloaded from the boost website.
 2. If you downloaded the MSVC_3RDPARTY_ROOT from this git repo, you can skip this step. Download OpenSceneGraph 3.2.0 from the OpenSceneGraph website. Extract it and then open CMake. Open the OpenSceneGraph folder and drag the file "CMakeLists.txt" onto the CMake window. In "Where to build the binaries", add "/build" to the end. This is where the project files will appear. Click the "Configure" button and click "Yes" to the dialog box that appears. Another dialog box should appear that is asking you what generator to use for this project. Expand the drop-down list and click on "Visual Studio 10 Win 64". Click "Finish" and then "Configure". After it is done, find the variable "CMAKE_INSTALL_PREFIX" and change that to the OpenSceneGraph folder in the directory tree above. If you can't find "CMAKE_INSTALL_PREFIX", check the "Advanced" box near the top. Click "Configure" again and then click "Generate". Navigate to the folder where you built your binaries and open the OpenSceneGraph solution file. Build the OpenSceneGraph solution(this will take awhile). After that is done, build just the "INSTALL" project in the solution explorer. NOTE: Build the release version.
 3. Pull the SimGear and FlightGear source code from this git repository.
