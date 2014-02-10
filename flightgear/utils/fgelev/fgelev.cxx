@@ -93,14 +93,14 @@ main(int argc, char** argv)
     // use an ArgumentParser object to manage the program arguments.
     osg::ArgumentParser arguments(&argc, argv);
 
-    std::string fg_root;
+    std::string fg_root; 
     if (arguments.read("--fg-root", fg_root)) {
     } else if (const char *fg_root_env = std::getenv("FG_ROOT")) {
         fg_root = fg_root_env;
     } else {
         fg_root = PKGLIBDIR;
     }
-
+	//fg_root = "C:\Users\Public\Documents\MSVC_3RDPARTY_ROOT-Backup\install\msvc100-64\FlightGear\data";
     std::string fg_scenery;
     if (arguments.read("--fg-scenery", fg_scenery)) {
     } else if (const char *fg_scenery_env = std::getenv("FG_SCENERY")) {
@@ -110,6 +110,7 @@ main(int argc, char** argv)
         path.append("Scenery");
         fg_scenery = path.str();
     }
+	//fg_scenery = "C:\Users\Public\Documents\MSVC_3RDPARTY_ROOT-Backup\install\msvc100-64\FlightGear\data\Scenery";
 
     SGSharedPtr<SGPropertyNode> props = new SGPropertyNode;
     try {

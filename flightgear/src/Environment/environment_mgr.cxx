@@ -274,6 +274,7 @@ FGEnvironmentMgr::unbind ()
 void
 FGEnvironmentMgr::update (double dt)
 {
+	// update all subsystems in the group of Environment subsystems (type GENERAL)
   SGSubsystemGroup::update(dt);
 
   _environment->set_elevation_ft( _altitude_n->getDoubleValue() );
