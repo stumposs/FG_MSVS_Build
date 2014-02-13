@@ -6,13 +6,14 @@
 #include <simgear\structure\subsystem_mgr.hxx>
 #include <simgear/props/props.hxx>
 #include "Main/fg_props.hxx"
-#include<iostream>
+#include <iostream>
+#include <sstream>
 
 
 class ActiveMQProducerSubsystem : public SGSubsystem
 {
 public:
-	ActiveMQProducerSubsystem() {m_producer = NULL;}
+	ActiveMQProducerSubsystem() {m_producer = NULL; m_lat = NULL; m_long = NULL;}
 	virtual ~ActiveMQProducerSubsystem()
 	{
 		m_producer->Close();
@@ -23,7 +24,8 @@ public:
 			delete m_producer;
 
 		m_producer = NULL;
-		//m_position = NULL;
+		m_lat = NULL;
+		m_long = NULL;
 	}
 
 	void ActiveMQProducerSubsystem::init()
@@ -35,7 +37,8 @@ public:
 		//m_producer->run();
 		producerThread.join();
 		 // get a pointer to the node that holds the desired property
-		 // m_position = fgGetNode("position/latitude-deg", true);
+		m_lat = fgGetNode("position/latitude-deg", true);
+		m_long = fgGetNode("position/longitude-deg", true);
 		  
 		  /*
 		positionLat = props->getNode("position/latitude-deg", true);
@@ -59,11 +62,16 @@ public:
 
 	void ActiveMQProducerSubsystem::update(double dt)
 	{
-		//double pos = m_position->getDoubleValue();
-		m_producer->SendMessage("WOOOOORK!");
+		double pos_lat = m_lat->getDoubleValue();
+		double pos_long = m_long->getDoubleValue();
+		std::ostringstream pos_s;
+		pos_s << pos_lat << " " << pos_long;
+		std::string pos = pos_s.str();
+		m_producer->SendMessage(pos);
 	}
 
 private:
 	ActiveMQProducer *m_producer;
-	//SGPropertyNode *m_position;
+	SGPropertyNode *m_lat;
+	SGPropertyNode *m_long;
 };
