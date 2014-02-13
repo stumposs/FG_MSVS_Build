@@ -1,0 +1,7 @@
+// AFTER ADDING/REMOVING/CHANGING CODE TO FLIGHTGEAR THIS FILE NEEDS TO BE UPDATED
+
+1. Added classes "ActiveMQProducer.h" in folder "ActiveMQ"
+
+2. Added header file "ActiveMQProducerSubsystem.h" in folder "ActiveMQ"
+
+2. fg_init.cxx Line:765 Added activemq subsystem to list of subsystems

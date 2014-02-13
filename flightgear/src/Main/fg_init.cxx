@@ -101,6 +101,7 @@
 #include <Instrumentation/HUD/HUD.hxx>
 #include <Cockpit/cockpitDisplayManager.hxx>
 #include <Network/HTTPClient.hxx>
+#include <ActiveMQ/ActiveMQProducerSubsystem.hxx>
 
 #include "fg_init.hxx"
 #include "fg_io.hxx"
@@ -757,6 +758,12 @@ void fgCreateSubsystems() {
 
     globals->add_subsystem("tile-manager", globals->get_tile_mgr(), 
       SGSubsystemMgr::DISPLAY);
+
+	////////////////////////////////////////////////////////////////////
+	// Initialize the ActiveMQ Producer Subsystem
+	////////////////////////////////////////////////////////////////////
+	//if(fgGetBool("/sim/enable-activemqproducer", false))
+	globals->add_subsystem("activemqproducer", new ActiveMQProducerSubsystem);
 }
 
 void fgPostInitSubsystems()
