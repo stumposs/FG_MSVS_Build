@@ -30,11 +30,13 @@ using namespace cms;
 using namespace std;
 using namespace decaf::lang;
 
+const static int MESSAGE_TYPE = 1;
+
 class ActiveMQProducer : public Runnable
 {
 public:
-	ActiveMQProducer(const std::string& brokerURI, unsigned int numMessages,
-		const std::string& destURI, bool useTopic = false, bool clientAck = false)
+	ActiveMQProducer(const std::string& brokerURI, const std::string& destURI, 
+		bool useTopic = false, bool clientAck = false)
 	{
 		m_connection = NULL;
 		m_session = NULL;
@@ -42,7 +44,6 @@ public:
 		m_producer = NULL;
 		m_useTopic = useTopic;
 		m_clientAck = clientAck;
-		m_numMessages = numMessages;
 		m_brokerURI = brokerURI;
 		m_destURI = destURI;
 	}
@@ -53,12 +54,17 @@ public:
 		this->CleanUp();
 	}
 
-	bool SendMessage(std::string msg)
+	// The "A" at the end of this function means absolutely nothing. Ignore it
+	// completely. I don't know why the flipidy fluck the compiler adds an "A" to
+	// the end of these function calls, but just to make it
+	// happy, I changed the function to SendMessageA. You still call
+	// this function using "SendMessage".
+	bool SendMessageA(std::string msg)
 	{
 		try
 		{
 			TextMessage *message = m_session->createTextMessage(msg);
-			message->setIntProperty("Integer", 1);
+			//message->setIntProperty("Integer", MESSAGE_TYPE);
 			m_producer->send(message);
 			delete message;
 			return true;
@@ -113,21 +119,6 @@ public:
 			// Create a MessageProducer from the session to the topic or queue
 			m_producer = m_session->createProducer(m_destination);
 			m_producer->setDeliveryMode(DeliveryMode::NON_PERSISTENT);
-
-			try
-			{
-				string msg = "This is flightgear speaking.";
-				TextMessage *message = m_session->createTextMessage(msg);
-				message->setIntProperty("Integer", 1);
-				m_producer->send(message);
-				delete message;
-				//return true;
-			}
-			catch(CMSException& e)
-			{
-				e.printStackTrace();
-				//return false;
-			}
 		}
 		catch(CMSException& e)
 		{
@@ -147,7 +138,6 @@ private:
 	MessageProducer *m_producer;
 	bool m_useTopic;
 	bool m_clientAck;
-	unsigned m_numMessages;
 	std::string m_brokerURI;
 	std::string m_destURI;
 

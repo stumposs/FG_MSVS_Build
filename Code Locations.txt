@@ -1,7 +1,14 @@
 // AFTER ADDING/REMOVING/CHANGING CODE TO FLIGHTGEAR THIS FILE NEEDS TO BE UPDATED
 
-1. Added classes "ActiveMQProducer.h" in folder "ActiveMQ"
+1. Added class "ActiveMQProducer.h" in folder "ActiveMQ"
 
 2. Added header file "ActiveMQProducerSubsystem.h" in folder "ActiveMQ"
 
-2. fg_init.cxx Line:765 Added activemq subsystem to list of subsystems
+3. fg_init.cxx Line:765 Added activemq subsystem to list of subsystems
+
+4. multiplayermgr.cxx Line: 943 Added players in multiplayer mode to property tree
+
+
+
+// To Do
+1. Multiplayer player nodes should not be editable

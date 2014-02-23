@@ -49,6 +49,7 @@
 #include "multiplaymgr.hxx"
 #include "mpmessages.hxx"
 #include <FDM/flightProperties.hxx>
+#include <cmath>
 
 using namespace std;
 
@@ -59,6 +60,32 @@ using namespace std;
 // command can list file versions
 const char sMULTIPLAYMGR_BID[] = "$Id$";
 const char sMULTIPLAYMGR_HID[] = MULTIPLAYTXMGR_HID;
+
+  // Convert ECEF (x, y, z) coordinates to latitude, longitude, and altitude
+inline void Convert(double x, double y, double z, double &latitude, double &longitude, double &alt)
+{
+	// WGS84 Ellipsoid constants
+	double A = 6378137;
+	double E = 8.1819190842622 * 0.01;
+
+	// I know these variable names suck, but I referenced code on the web to 
+	// complete this calculation
+	// www.mathworks.com/matlabcentral/newreader/view_thread/142629
+	double b = sqrt(pow(A, 2.0) * (1 - pow(E, 2.0)));
+	double ep = sqrt((pow(A, 2.0) - pow(b, 2.0)) / pow(b, 2.0));
+	double p = sqrt(pow(x, 2.0) + pow(y, 2.0));
+	double th = atan2(A * z, b * p);
+	latitude = atan2(z + pow(ep, 2.0) * b * pow(sin(th), 3.0), p - pow(E, 2.0) * A * pow(cos(th), 3.0));
+	longitude = atan2(y, x);
+	double N = A / sqrt(1 - pow(E, 2.0) * pow(sin(latitude), 2.0));
+	alt = p / cos(latitude) - N;
+	longitude = fmod(longitude, 2.0 * M_PI);
+
+	// Convert to degrees
+	latitude = latitude * 180.0 / M_PI;
+	longitude = longitude * 180.0 / M_PI;
+	//alt = alt * 180.0 / M_PI;
+}
 
 struct IdPropertyList {
   unsigned id;
@@ -934,11 +961,15 @@ FGMultiplayMgr::update(double dt)
     //////////////////////////////////////////////////
     //  Process messages
     //////////////////////////////////////////////////
+	SGPropertyNode *player;
     switch (MsgHdr->MsgId) {
     case CHAT_MSG_ID:
       ProcessChatMsg(msgBuf, SenderAddress);
       break;
     case POS_DATA_ID:
+      // Add player node to multiplayer node on property tree
+	  if(!fgGetNode("multiplayer", true)->hasChild(MsgHdr->Callsign))
+	    player = fgGetNode("multiplayer", true)->addChild(MsgHdr->Callsign);
       ProcessPosMsg(msgBuf, SenderAddress, stamp);
       break;
     case UNUSABLE_POS_DATA_ID:
@@ -1252,6 +1283,68 @@ FGMultiplayMgr::ProcessPosMsg(const FGMultiplayMgr::MsgBuf& Msg,
              << id); 
     }
   }
+
+  // Add properties to property tree
+  SGPropertyNode *rootNode = fgGetNode("multiplayer", true);
+
+  SGPropertyNode *playerNode = NULL;
+  if(!rootNode->hasChild(MsgHdr->Callsign))
+	  playerNode = rootNode->addChild(MsgHdr->Callsign);
+  else
+	  playerNode = rootNode->getChild(MsgHdr->Callsign);
+
+  SGPropertyNode *positionNode = NULL;
+  if(!(playerNode->hasChild("position")))
+	  positionNode = playerNode->addChild("position");
+  else
+	  positionNode = playerNode->getChild("position");
+
+  SGPropertyNode *XNode = NULL;
+  if(!(positionNode->hasChild("X")))
+	  XNode = positionNode->addChild("X");
+  else
+	  XNode = positionNode->getChild("X");
+  XNode->setDoubleValue(motionInfo.position.x());
+
+  SGPropertyNode *YNode = NULL;
+  if(!(positionNode->hasChild("Y")))
+	  YNode = positionNode->addChild("Y");
+  else
+	  YNode = positionNode->getChild("Y");
+  YNode->setDoubleValue(motionInfo.position.y());
+
+  SGPropertyNode *ZNode = NULL;
+  if(!(positionNode->hasChild("Z")))
+	  ZNode = positionNode->addChild("Z");
+  else
+	  ZNode = positionNode->getChild("Z");
+  ZNode->setDoubleValue(motionInfo.position.z());
+
+  double latitude, longitude, altitude = 0;
+  Convert(motionInfo.position.x(), motionInfo.position.y(), motionInfo.position.z(),
+	  latitude, longitude, altitude);
+
+  SGPropertyNode *latNode = NULL;
+  if(!(positionNode->hasChild("latitude-deg")))
+	  latNode = positionNode->addChild("latitude-deg");
+  else
+	  latNode = positionNode->getChild("latitude-deg");
+  latNode->setDoubleValue(latitude);
+
+  SGPropertyNode *longNode = NULL;
+  if(!(positionNode->hasChild("longitude-deg")))
+	  longNode = positionNode->addChild("longitude-deg");
+  else
+	  longNode = positionNode->getChild("longitude-deg");
+  longNode->setDoubleValue(longitude);
+
+  SGPropertyNode *altNode = NULL;
+  if(!(positionNode->hasChild("altitude")))
+	  altNode = positionNode->addChild("altitude");
+  else
+	  altNode = positionNode->getChild("altitude");
+  altNode->setDoubleValue(altitude);
+
  noprops:
   FGAIMultiplayer* mp = getMultiplayer(MsgHdr->Callsign);
   if (!mp)
