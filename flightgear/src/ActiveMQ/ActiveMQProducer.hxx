@@ -54,12 +54,7 @@ public:
 		this->CleanUp();
 	}
 
-	// The "A" at the end of this function means absolutely nothing. Ignore it
-	// completely. I don't know why the flipidy fluck the compiler adds an "A" to
-	// the end of these function calls, but just to make it
-	// happy, I changed the function to SendMessageA. You still call
-	// this function using "SendMessage".
-	bool SendMessageA(std::string msg)
+	bool SendMessage(std::string msg)
 	{
 		try
 		{
