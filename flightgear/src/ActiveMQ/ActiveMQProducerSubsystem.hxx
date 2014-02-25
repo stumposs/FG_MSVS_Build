@@ -8,27 +8,26 @@
 #include "Main/fg_props.hxx"
 #include <iostream>
 #include <sstream>
-#include <windows.h>
+//#include <windows.h>
 
 class ActiveMQProducerSubsystem : public SGSubsystem
 {
 public:
-	ActiveMQProducerSubsystem() {m_producer = NULL; m_lat = NULL; m_long = NULL;}
+	ActiveMQProducerSubsystem() {m_producer = NULL;}
 	virtual ~ActiveMQProducerSubsystem()
 	{
 		// Close and clean up the producer
 		m_producer->Close();
-
-		activemq::library::ActiveMQCPP::shutdownLibrary();
+		//m_producerThread->join();
 
 		if(m_producer != NULL)
 			delete m_producer;
 
 		m_producer = NULL;
 
-		// Don't actually delete these property nodes!
-		m_lat = NULL;
-		m_long = NULL;
+		//delete m_producerThread;
+
+		activemq::library::ActiveMQCPP::shutdownLibrary();
 	}
 
 	void ActiveMQProducerSubsystem::init()
@@ -42,7 +41,8 @@ public:
 		// Need to atleast start the producer in its own thread
 		Thread producerThread(m_producer);
 		producerThread.start();
-		producerThread.join();
+		//m_producer->run();
+		//producerThread.join();
 
 		// Add the multiplayer parent node
 		m_multiplayer = fgGetNode("/", true)->addChild("multiplayer");
@@ -67,6 +67,8 @@ public:
 		if(m_producer != NULL)
 			delete m_producer;
 
+		//delete m_producerThread;
+
 		// Create the producer
 		m_producer = new ActiveMQProducer("failover://(tcp://localhost:61616)", "TEST.FOO", false);
 
@@ -74,7 +76,8 @@ public:
 		// Need to atleast start the producer in its own thread
 		Thread producerThread(m_producer);
 		producerThread.start();
-		producerThread.join();
+		//m_producer->run();
+		//producerThread.join();
 	}
 
 	void ActiveMQProducerSubsystem::bind()
@@ -89,7 +92,7 @@ public:
 	{
 		// If we haven't sent an update in 300 milliseconds,
 		// send another update
-		if((SGTimeStamp::now() - m_lastMessageSent).toMSecs() > 300)
+		if((SGTimeStamp::now() - m_lastMessageSent).toMSecs() > 3000)
 		{
 			// Get appropriate values from the property nodes
 			double pos_lat = m_lat->getDoubleValue();
@@ -151,6 +154,9 @@ public:
 private:
 	//! Our ActiveMQ Producer
 	ActiveMQProducer *m_producer;
+
+	//! ActiveMQProducer thread
+	//Thread *m_producerThread;
 
 	//! Timer
 	SGTimeStamp m_lastMessageSent;

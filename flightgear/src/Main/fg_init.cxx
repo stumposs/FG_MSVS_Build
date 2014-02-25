@@ -102,6 +102,7 @@
 #include <Cockpit/cockpitDisplayManager.hxx>
 #include <Network/HTTPClient.hxx>
 #include <ActiveMQ/ActiveMQProducerSubsystem.hxx>
+#include <ActiveMQ/ActiveMQConsumerSubsystem.h>
 
 #include "fg_init.hxx"
 #include "fg_io.hxx"
@@ -764,6 +765,11 @@ void fgCreateSubsystems() {
 	////////////////////////////////////////////////////////////////////
 	//if(fgGetBool("/sim/enable-activemqproducer", false))
 	globals->add_subsystem("activemqproducer", new ActiveMQProducerSubsystem);
+
+	////////////////////////////////////////////////////////////////////
+	// Initialize the ActiveMQ Consumer Subsystem
+	////////////////////////////////////////////////////////////////////
+	globals->add_subsystem("activemqconsumer", new ActiveMQConsumerSubsystem);
 }
 
 void fgPostInitSubsystems()
