@@ -71,6 +71,7 @@ FGTileMgr::FGTileMgr():
 
 FGTileMgr::~FGTileMgr()
 {
+
     // remove all nodes we might have left behind
     osg::Group* group = globals->get_scenery()->get_terrain_branch();
     group->removeChildren(0, group->getNumChildren());

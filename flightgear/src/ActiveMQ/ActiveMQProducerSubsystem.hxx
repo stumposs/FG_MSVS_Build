@@ -13,7 +13,7 @@
 class ActiveMQProducerSubsystem : public SGSubsystem
 {
 public:
-	ActiveMQProducerSubsystem() {m_producer = NULL;}
+	ActiveMQProducerSubsystem() {m_producer = NULL; m_routeRoot = NULL;}
 	virtual ~ActiveMQProducerSubsystem()
 	{
 		// Close and clean up the producer
@@ -42,7 +42,7 @@ public:
 		Thread producerThread(m_producer);
 		producerThread.start();
 		//m_producer->run();
-		//producerThread.join();
+		producerThread.join();
 
 		// Add the multiplayer parent node
 		m_multiplayer = fgGetNode("/", true)->addChild("multiplayer");
@@ -54,7 +54,11 @@ public:
 		m_totalFuel = fgGetNode("consumables/fuel/total-fuel-gals", true);
 		m_percentFuelLevel = fgGetNode("consumables/fuel/total-fuel-norm", true);
 		m_currentTime = fgGetNode("instrumentation/clock/local-short-string", true);
-		m_batteryLevel = fgGetNode("systems/electrical/battery-charge-percent", true);
+		m_orientationDeg = fgGetNode("orientation/heading-deg", true);
+		m_airspeed = fgGetNode("velocities/airspeed-kt", true);
+
+		// Get the route root property node
+		m_routeRoot = fgGetNode("autopilot/route-manager", true);
 
 		m_lastMessageSent = SGTimeStamp::now();
 	}
@@ -77,7 +81,7 @@ public:
 		Thread producerThread(m_producer);
 		producerThread.start();
 		//m_producer->run();
-		//producerThread.join();
+		producerThread.join();
 	}
 
 	void ActiveMQProducerSubsystem::bind()
@@ -102,21 +106,24 @@ public:
 			double fuel_percentLevel = m_percentFuelLevel->getDoubleValue();
 			m_totalFuelCapacity = fuel_total / fuel_percentLevel;
 			std::string time_current = m_currentTime->getStringValue();
-			double battery_percent = m_batteryLevel->getDoubleValue();
+			double orientationDeg = m_orientationDeg->getDoubleValue();
+			double airspeedKnots = m_airspeed->getDoubleValue();
+
+			// Get info on the route from property nodes
+			double eta = m_routeRoot->getChild("wp-last")->getDoubleValue();
 
 			// Format the message
 			std::ostringstream message_stream;
 			message_stream << "playername Player" << ",";
 			message_stream << "latitude-deg" << " " << pos_lat << ","; 
-			message_stream << "langitude-deg" << " " << pos_long << ",";
+			message_stream << "longitude-deg" << " " << pos_long << ",";
 			message_stream << "altitude" << " " << pos_alt << "\n";
 			/*message_stream << ID_FUEL << " " << fuel_total << " " << fuel_percentLevel << " " << m_totalFuelCapacity;
-			message_stream << ID_BATTERY << " " << battery_percent;
 			message_stream << ID_TIME << " " << time_current;
 			message_stream << pos_lat << " " << pos_long;*/
 			message_stream << "\n";
 
-			// Send multiplayer message
+			// Get info for mutliplayer message
 			SGPropertyNode *multiplayerRoot = fgGetNode("multiplayer", true);
 			if(multiplayerRoot->nChildren() > 0)
 			{
@@ -129,7 +136,7 @@ public:
 					playerName = n->getNameString();
 					latitude = n->getChild("position")->getChild("latitude-deg")->getDoubleValue();
 					longitude = n->getChild("position")->getChild("longitude-deg")->getDoubleValue();
-					message_stream << "playername: " << playerName << ",";
+					message_stream << "playername " << playerName << ",";
 					message_stream << "latitude-deg" << " " << latitude << ",";
 					message_stream << "longitude-deg" << " " << longitude << "\n";
 					message_stream << "\n";
@@ -186,8 +193,15 @@ private:
 	//! Pointer to the property node that holds the in-game time
 	SGPropertyNode *m_currentTime;
 
-	//! Pointer to the property node that holds the battery level (%)
-	SGPropertyNode *m_batteryLevel;
+	//! Pointer to the property node that holds the aircraft orientation in degrees
+	SGPropertyNode *m_orientationDeg;
 
+	//! Pointer to the property node that holds the aircraft speed in knots
+	SGPropertyNode *m_airspeed;
+
+	//! Pointer to the root autopilot property node
+	SGPropertyNode *m_routeRoot;
+
+	//! Root of the created multiplayer node
 	SGPropertyNode *m_multiplayer;
 };
