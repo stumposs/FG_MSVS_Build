@@ -56,6 +56,10 @@ public:
 		m_currentTime = fgGetNode("instrumentation/clock/local-short-string", true);
 		m_orientationDeg = fgGetNode("orientation/heading-deg", true);
 		m_airspeed = fgGetNode("velocities/airspeed-kt", true);
+		m_temperatureF = fgGetNode("environment/temperature-degf", true);
+		m_windSpeedKnots = fgGetNode("environment/wind-speed-kt", true);
+		m_windHeading = fgGetNode("environment/wind-from-heading-deg", true);
+		m_weatherScenario = fgGetNode("environment/weather-scenario", true);
 
 		// Get the route root property node
 		m_routeRoot = fgGetNode("autopilot/route-manager", true);
@@ -98,29 +102,73 @@ public:
 		// send another update
 		if((SGTimeStamp::now() - m_lastMessageSent).toMSecs() > 3000)
 		{
+			//
 			// Get appropriate values from the property nodes
+			//
+
+			// Latitude, Longitude, and Altitude
 			double pos_lat = m_lat->getDoubleValue();
 			double pos_long = m_long->getDoubleValue();
 			double pos_alt = m_altitude->getDoubleValue();
+
+			// Aircraft heading
+			double orientationDeg = m_orientationDeg->getDoubleValue();
+			std::ostringstream heading_stream;
+			if(orientationDeg > 340 || orientationDeg <= 20)
+			{
+				heading_stream << "North at " << orientationDeg << " degrees";
+			}
+			else if(orientationDeg > 20 && orientationDeg <= 70)
+			{
+				heading_stream << "North-East at " << orientationDeg << " degrees";
+			}
+			else if(orientationDeg > 70 && orientationDeg <= 110)
+			{
+				heading_stream << "East at " << orientationDeg << " degrees";
+			}
+			else if(orientationDeg > 110 && orientationDeg <= 160)
+			{
+				heading_stream << "South-East at " << orientationDeg << " degrees";
+			}
+			else if(orientationDeg > 160 && orientationDeg <= 200)
+			{
+				heading_stream << "South at " << orientationDeg << " degrees";
+			}
+			else if(orientationDeg > 200 && orientationDeg <= 250)
+			{
+				heading_stream << "South-West at " << orientationDeg << " degrees";
+			}
+			else if(orientationDeg > 250 && orientationDeg <= 290)
+			{
+				heading_stream << "West at " << orientationDeg << " degrees";
+			}
+			else
+			{
+				heading_stream << "North-West at " << orientationDeg << " degrees";
+			}
+
+			// Airspeed
+			double airspeedKnots = m_airspeed->getDoubleValue();
+
+			// Current local time
+			std::string time_current = m_currentTime->getStringValue();
+
+			// Fuel levels
 			double fuel_total = m_totalFuel->getDoubleValue();
 			double fuel_percentLevel = m_percentFuelLevel->getDoubleValue();
 			m_totalFuelCapacity = fuel_total / fuel_percentLevel;
-			std::string time_current = m_currentTime->getStringValue();
-			double orientationDeg = m_orientationDeg->getDoubleValue();
-			double airspeedKnots = m_airspeed->getDoubleValue();
-
-			// Get info on the route from property nodes
-			double eta = m_routeRoot->getChild("wp-last")->getDoubleValue();
 
 			// Format the message
 			std::ostringstream message_stream;
 			message_stream << "playername Player" << ",";
 			message_stream << "latitude-deg" << " " << pos_lat << ","; 
 			message_stream << "longitude-deg" << " " << pos_long << ",";
-			message_stream << "altitude" << " " << pos_alt << "\n";
-			/*message_stream << ID_FUEL << " " << fuel_total << " " << fuel_percentLevel << " " << m_totalFuelCapacity;
-			message_stream << ID_TIME << " " << time_current;
-			message_stream << pos_lat << " " << pos_long;*/
+			message_stream << "altitude" << " " << pos_alt << ",";
+			message_stream << "heading-deg" << " " << heading_stream.str() << ",";
+			message_stream << "airspeed-kt" << " " << airspeedKnots << ",";
+			message_stream << "local-short-string" << " " << time_current << ",";
+			message_stream << "total-fuel-gals" << " " << fuel_total << ",";
+			message_stream << "total-fuel-capacity" << " " << m_totalFuelCapacity << "\n";
 			message_stream << "\n";
 
 			// Get info for mutliplayer message
@@ -141,8 +189,22 @@ public:
 					message_stream << "longitude-deg" << " " << longitude << "\n";
 					message_stream << "\n";
 				}
-				message_stream << "END";
 			}
+
+			// Environment info
+			double tempF = m_temperatureF->getDoubleValue();
+			double windSpeed = m_windSpeedKnots->getDoubleValue();
+			double windHeading = m_windHeading->getDoubleValue();
+			std::string weatherScenario = m_weatherScenario->getStringValue();
+
+			message_stream << "Environment,";
+			message_stream << "temperature-degf" << " " << tempF << ",";
+			message_stream << "wind-speed-kt" << " " << windSpeed << ",";
+			message_stream << "wind-from-heading-deg" << " " << windHeading << ",";
+			message_stream << "weather-scenario" << " " << weatherScenario << "\n";
+			message_stream << "\n";
+
+			message_stream << "END";
 
 			// Send message
 			std::string msg = message_stream.str();
@@ -198,6 +260,18 @@ private:
 
 	//! Pointer to the property node that holds the aircraft speed in knots
 	SGPropertyNode *m_airspeed;
+
+	//! Pointer to the property node that holds the temperature in degrees fahrenheit
+	SGPropertyNode *m_temperatureF;
+
+	//! Pointer to the property node that holds the wind speed in knots
+	SGPropertyNode *m_windSpeedKnots;
+
+	//! Pointer to the property node that holds the wind direction in degrees
+	SGPropertyNode *m_windHeading;
+
+	//! Pointer to the property node that holds the weather scenario (Fair, Rain, Snow, etc.)
+	SGPropertyNode *m_weatherScenario;
 
 	//! Pointer to the root autopilot property node
 	SGPropertyNode *m_routeRoot;
