@@ -113,39 +113,6 @@ public:
 
 			// Aircraft heading
 			double orientationDeg = m_orientationDeg->getDoubleValue();
-			std::ostringstream heading_stream;
-			if(orientationDeg > 340 || orientationDeg <= 20)
-			{
-				heading_stream << "North at " << orientationDeg << " degrees";
-			}
-			else if(orientationDeg > 20 && orientationDeg <= 70)
-			{
-				heading_stream << "North-East at " << orientationDeg << " degrees";
-			}
-			else if(orientationDeg > 70 && orientationDeg <= 110)
-			{
-				heading_stream << "East at " << orientationDeg << " degrees";
-			}
-			else if(orientationDeg > 110 && orientationDeg <= 160)
-			{
-				heading_stream << "South-East at " << orientationDeg << " degrees";
-			}
-			else if(orientationDeg > 160 && orientationDeg <= 200)
-			{
-				heading_stream << "South at " << orientationDeg << " degrees";
-			}
-			else if(orientationDeg > 200 && orientationDeg <= 250)
-			{
-				heading_stream << "South-West at " << orientationDeg << " degrees";
-			}
-			else if(orientationDeg > 250 && orientationDeg <= 290)
-			{
-				heading_stream << "West at " << orientationDeg << " degrees";
-			}
-			else
-			{
-				heading_stream << "North-West at " << orientationDeg << " degrees";
-			}
 
 			// Airspeed
 			double airspeedKnots = m_airspeed->getDoubleValue();
@@ -164,7 +131,7 @@ public:
 			message_stream << "latitude-deg" << " " << pos_lat << ","; 
 			message_stream << "longitude-deg" << " " << pos_long << ",";
 			message_stream << "altitude" << " " << pos_alt << ",";
-			message_stream << "heading-deg" << " " << heading_stream.str() << ",";
+			message_stream << "heading-deg" << " " << orientationDeg << ",";
 			message_stream << "airspeed-kt" << " " << airspeedKnots << ",";
 			message_stream << "local-short-string" << " " << time_current << ",";
 			message_stream << "total-fuel-gals" << " " << fuel_total << ",";
@@ -178,15 +145,24 @@ public:
 				std::string playerName = "";
 				double latitude = 0.0;
 				double longitude = 0.0;
+				double alt = 0.0;
+				double speed = 0.0;
+				float angle = 0.0;
 				for(int i = 0; i < multiplayerRoot->nChildren(); i++)
 				{
 					SGPropertyNode *n = multiplayerRoot->getChild(i);
 					playerName = n->getNameString();
 					latitude = n->getChild("position")->getChild("latitude-deg")->getDoubleValue();
 					longitude = n->getChild("position")->getChild("longitude-deg")->getDoubleValue();
+					alt = n->getChild("position")->getChild("altitude")->getDoubleValue();
+					angle = n->getChild("orientation")->getDoubleValue();
+					speed = n->getChild("speed")->getDoubleValue();
 					message_stream << "playername " << playerName << ",";
 					message_stream << "latitude-deg" << " " << latitude << ",";
-					message_stream << "longitude-deg" << " " << longitude << "\n";
+					message_stream << "longitude-deg" << " " << longitude << ",";
+					message_stream << "altitude" << " " << alt << ",";
+					message_stream << "heading-deg" << " " << angle << ",";
+					message_stream << "airspeed-kt" << " " << speed << "\n";
 					message_stream << "\n";
 				}
 			}

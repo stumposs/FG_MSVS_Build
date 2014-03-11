@@ -61,7 +61,7 @@ using namespace std;
 const char sMULTIPLAYMGR_BID[] = "$Id$";
 const char sMULTIPLAYMGR_HID[] = MULTIPLAYTXMGR_HID;
 
-  // Convert ECEF (x, y, z) coordinates to latitude, longitude, and altitude
+// Convert ECEF (x, y, z) coordinates to latitude, longitude, and altitude
 inline void Convert(double x, double y, double z, double &latitude, double &longitude, double &alt)
 {
 	// WGS84 Ellipsoid constants
@@ -84,7 +84,9 @@ inline void Convert(double x, double y, double z, double &latitude, double &long
 	// Convert to degrees
 	latitude = latitude * 180.0 / M_PI;
 	longitude = longitude * 180.0 / M_PI;
-	//alt = alt * 180.0 / M_PI;
+
+	// Meters to feet
+	alt = alt * 3.28084;
 }
 
 struct IdPropertyList {
@@ -1344,6 +1346,30 @@ FGMultiplayMgr::ProcessPosMsg(const FGMultiplayMgr::MsgBuf& Msg,
   else
 	  altNode = positionNode->getChild("altitude");
   altNode->setDoubleValue(altitude);
+
+  SGPropertyNode *speedNode = NULL;
+  if(!(playerNode->hasChild("speed")))
+	  speedNode = playerNode->addChild("speed");
+  else
+	  speedNode = playerNode->getChild("speed");
+
+  // Calculate speed
+  double speed = sqrt(pow(motionInfo.linearVel.x(), 2) + pow(motionInfo.linearVel.y(), 2)
+	  + pow(motionInfo.linearVel.z(), 2));
+  // Convert to knots from m/s?
+  speed *= 1.94384;
+  speedNode->setDoubleValue(speed);
+
+  SGPropertyNode *orientationNode = NULL;
+  if(!(playerNode->hasChild("orientation")))
+	  orientationNode = playerNode->addChild("orientation");
+  else
+	  orientationNode = playerNode->getChild("orientation");
+
+  float angle;
+  SGVec3<float> axis;
+  motionInfo.orientation.getAngleAxis(angle, axis);
+  orientationNode->setFloatValue(angle * 180 / M_PI);
 
  noprops:
   FGAIMultiplayer* mp = getMultiplayer(MsgHdr->Callsign);
