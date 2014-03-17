@@ -7,8 +7,3 @@
 3. fg_init.cxx Line:765 Added activemq subsystem to list of subsystems
 
 4. multiplayermgr.cxx Line: 943 Added players in multiplayer mode to property tree
-
-
-
-// To Do
-1. Multiplayer player nodes should not be editable
