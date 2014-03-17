@@ -418,7 +418,11 @@ FGMultiplayMgr::FGMultiplayMgr()
 //////////////////////////////////////////////////////////////////////
 FGMultiplayMgr::~FGMultiplayMgr() 
 {
-  
+  for(std::vector<Player *>::iterator it = m_players.begin(); it != m_players.end(); it++)
+  {
+    delete (*it);
+  }
+  m_players.clear();
 } // FGMultiplayMgr::~FGMultiplayMgr()
 //////////////////////////////////////////////////////////////////////
 
@@ -970,8 +974,8 @@ FGMultiplayMgr::update(double dt)
       break;
     case POS_DATA_ID:
       // Add player node to multiplayer node on property tree
-	  if(!fgGetNode("multiplayer", true)->hasChild(MsgHdr->Callsign))
-	    player = fgGetNode("multiplayer", true)->addChild(MsgHdr->Callsign);
+	  /*if(!fgGetNode("multiplayer", true)->hasChild(MsgHdr->Callsign))
+	    player = fgGetNode("multiplayer", true)->addChild(MsgHdr->Callsign);*/
       ProcessPosMsg(msgBuf, SenderAddress, stamp);
       break;
     case UNUSABLE_POS_DATA_ID:
@@ -1287,7 +1291,7 @@ FGMultiplayMgr::ProcessPosMsg(const FGMultiplayMgr::MsgBuf& Msg,
   }
 
   // Add properties to property tree
-  SGPropertyNode *rootNode = fgGetNode("multiplayer", true);
+  /*SGPropertyNode *rootNode = fgGetNode("multiplayer", true);
 
   SGPropertyNode *playerNode = NULL;
   if(!rootNode->hasChild(MsgHdr->Callsign))
@@ -1364,18 +1368,50 @@ FGMultiplayMgr::ProcessPosMsg(const FGMultiplayMgr::MsgBuf& Msg,
   if(!(playerNode->hasChild("orientation")))
 	  orientationNode = playerNode->addChild("orientation");
   else
-	  orientationNode = playerNode->getChild("orientation");
+	  orientationNode = playerNode->getChild("orientation");*/
+
+  double latitude, longitude, altitude = 0;
+  Convert(motionInfo.position.x(), motionInfo.position.y(), motionInfo.position.z(),
+	  latitude, longitude, altitude);
 
   float angle;
   SGVec3<float> axis;
   motionInfo.orientation.getAngleAxis(angle, axis);
-  orientationNode->setFloatValue(angle * 180 / M_PI);
+
+  double speed = sqrt(pow(motionInfo.linearVel.x(), 2) + pow(motionInfo.linearVel.y(), 2)
+	  + pow(motionInfo.linearVel.z(), 2));
+  // Convert to knots from m/s?
+  speed *= 1.94384;
+
+  for(std::vector<Player *>::iterator it = m_players.begin(); it != m_players.end(); it++)
+  {
+	  if((*it)->callSign == MsgHdr->Callsign)
+	  {
+		  (*it)->callSign = MsgHdr->Callsign;
+		  (*it)->lat = latitude;
+		  (*it)->longitude = longitude;
+		  (*it)->alt = altitude;
+		  (*it)->speed = speed;
+		  (*it)->orientation = 0.0;
+	  }
+  }
 
  noprops:
   FGAIMultiplayer* mp = getMultiplayer(MsgHdr->Callsign);
   if (!mp)
     mp = addMultiplayer(MsgHdr->Callsign, PosMsg->Model);
   mp->addMotionInfo(motionInfo, stamp);
+  if(!playerExists(MsgHdr->Callsign))
+  {
+	  Player *player = new Player();
+	  player->callSign = MsgHdr->Callsign;
+	  player->lat = latitude;
+	  player->longitude = longitude;
+	  player->alt = altitude;
+	  player->speed = speed;
+	  player->orientation = 0.0;
+	  m_players.push_back(player);
+  }
 } // FGMultiplayMgr::ProcessPosMsg()
 //////////////////////////////////////////////////////////////////////
 

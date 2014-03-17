@@ -8,12 +8,15 @@
 #include "Main/fg_props.hxx"
 #include <iostream>
 #include <sstream>
-//#include <windows.h>
+#include <vector>
+#include <MultiPlayer\multiplaymgr.hxx>
+
+using namespace std;
 
 class ActiveMQProducerSubsystem : public SGSubsystem
 {
 public:
-	ActiveMQProducerSubsystem() {m_producer = NULL; m_routeRoot = NULL;}
+	ActiveMQProducerSubsystem() {m_producer = NULL; m_routeRoot = NULL; m_multiplayMgr = NULL;}
 	virtual ~ActiveMQProducerSubsystem()
 	{
 		// Close and clean up the producer
@@ -45,7 +48,7 @@ public:
 		producerThread.join();
 
 		// Add the multiplayer parent node
-		m_multiplayer = fgGetNode("/", true)->addChild("multiplayer");
+		//m_multiplayer = fgGetNode("/", true)->addChild("multiplayer");
 
 		 // get a pointer to the node that holds the desired property
 		m_lat = fgGetNode("position/latitude-deg", true);
@@ -139,7 +142,7 @@ public:
 			message_stream << "\n";
 
 			// Get info for mutliplayer message
-			SGPropertyNode *multiplayerRoot = fgGetNode("multiplayer", true);
+			/*SGPropertyNode *multiplayerRoot = fgGetNode("multiplayer", true);
 			if(multiplayerRoot->nChildren() > 0)
 			{
 				std::string playerName = "";
@@ -165,7 +168,8 @@ public:
 					message_stream << "airspeed-kt" << " " << speed << "\n";
 					message_stream << "\n";
 				}
-			}
+			}*/
+			message_stream << m_multiplayMgr->ConstructProducerMessage();
 
 			// Environment info
 			double tempF = m_temperatureF->getDoubleValue();
@@ -191,14 +195,14 @@ public:
 		}
 	}
 
-	int ActiveMQProducerSubsystem::StephaniesFunction()
-	{
-		return 0;
-	}
+	void SetMultiplayMgr(FGMultiplayMgr *m) {m_multiplayMgr = m;}
 
 private:
 	//! Our ActiveMQ Producer
 	ActiveMQProducer *m_producer;
+
+	//! The multiplaymgr class
+	FGMultiplayMgr *m_multiplayMgr;
 
 	//! ActiveMQProducer thread
 	//Thread *m_producerThread;
@@ -253,5 +257,5 @@ private:
 	SGPropertyNode *m_routeRoot;
 
 	//! Root of the created multiplayer node
-	SGPropertyNode *m_multiplayer;
+	//SGPropertyNode *m_multiplayer;
 };

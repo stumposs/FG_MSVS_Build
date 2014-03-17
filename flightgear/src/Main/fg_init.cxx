@@ -692,8 +692,9 @@ void fgCreateSubsystems() {
     ////////////////////////////////////////////////////////////////////
     // Initialize multiplayer subsystem
     ////////////////////////////////////////////////////////////////////
-
-    globals->add_subsystem("mp", new FGMultiplayMgr, SGSubsystemMgr::POST_FDM);
+	
+	FGMultiplayMgr *multimgr = new FGMultiplayMgr();
+    globals->add_subsystem("mp", multimgr, SGSubsystemMgr::POST_FDM);
 
     ////////////////////////////////////////////////////////////////////
     // Initialise the AI Model Manager
@@ -763,8 +764,11 @@ void fgCreateSubsystems() {
 	////////////////////////////////////////////////////////////////////
 	// Initialize the ActiveMQ Producer Subsystem
 	////////////////////////////////////////////////////////////////////
-	//if(fgGetBool("/sim/enable-activemqproducer", false))
-	globals->add_subsystem("activemqproducer", new ActiveMQProducerSubsystem);
+	ActiveMQProducerSubsystem *producerSubsystem = new ActiveMQProducerSubsystem();
+	globals->add_subsystem("activemqproducer", producerSubsystem);
+
+	// Set the multiplaymgr in the producer subsystem
+	producerSubsystem->SetMultiplayMgr(multimgr);
 
 	////////////////////////////////////////////////////////////////////
 	// Initialize the ActiveMQ Consumer Subsystem

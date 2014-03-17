@@ -49,6 +49,40 @@ class FGAIMultiplayer;
 class FGMultiplayMgr : public SGSubsystem
 {
 public:  
+	// Class to represent a player on the network when connected to multiplayer
+	/*class Player
+	{
+	public:
+		Player(string cs, double lat, double longitude, double alt, double speed, double orientation)
+		{
+			m_callSign = cs;
+			m_lat = lat;
+			m_long = longitude;
+			m_alt = alt;
+			m_speed = speed;
+			m_orientation = orientation;
+		}
+		~Player() {}
+	private:
+		//! Callsign
+		string m_callSign;
+
+		//! Latitude (deg)
+		double m_lat;
+
+		//! Longitude (deg)
+		double m_long;
+
+		//! Altitude (ft)
+		double m_alt;
+
+		//! Speed (knots)
+		double m_speed;
+
+		//! Orientation (deg)
+		double m_orientation;
+	};*/
+
   FGMultiplayMgr();
   ~FGMultiplayMgr();
   
@@ -62,6 +96,22 @@ public:
   
   void SendTextMessage(const std::string &sMsgText);
   // receiver
+
+  std::string ConstructProducerMessage()
+  {
+	  std::ostringstream message_stream;
+	  for(std::vector<Player *>::iterator it = m_players.begin(); it != m_players.end(); it++)
+	  {
+		  message_stream << "playername " << (*it)->callSign << "," <<
+			  "latitude-deg " << (*it)->lat << "," <<
+			  "longitude-deg " << (*it)->longitude << "," <<
+			  "altitude " << (*it)->alt << "," <<
+			  "heading-deg " << (*it)->orientation << "," <<
+			  "airspeed-kt " << (*it)->speed << "\n\n";
+	  }
+
+	  return message_stream.str();
+  }
   
 private:
   friend class MPPropertyListener;
@@ -106,6 +156,39 @@ private:
   
   double mDt; // reciprocal of /sim/multiplay/tx-rate-hz
   double mTimeUntilSend;
+
+  struct Player
+  {
+	  //! Callsign
+	std::string callSign;
+
+	//! Latitude (deg)
+	double lat;
+
+	//! Longitude (deg)
+	double longitude;
+
+	//! Altitude (ft)
+	double alt;
+
+	//! Speed (knots)
+	double speed;
+
+	//! Orientation (deg)
+	double orientation;
+  };
+
+  std::vector<Player *> m_players;
+
+  bool playerExists(std::string cs)
+  {
+	  for(std::vector<Player *>::iterator it = m_players.begin(); it != m_players.end(); it++)
+	  {
+		  if((*it)->callSign == cs)
+			  return true;
+	  }
+	  return false;
+  }
 };
 
 #endif
