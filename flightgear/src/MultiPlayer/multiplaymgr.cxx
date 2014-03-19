@@ -418,11 +418,7 @@ FGMultiplayMgr::FGMultiplayMgr()
 //////////////////////////////////////////////////////////////////////
 FGMultiplayMgr::~FGMultiplayMgr() 
 {
-  for(std::vector<Player *>::iterator it = m_players.begin(); it != m_players.end(); it++)
-  {
-    delete (*it);
-  }
-  m_players.clear();
+
 } // FGMultiplayMgr::~FGMultiplayMgr()
 //////////////////////////////////////////////////////////////////////
 
@@ -967,15 +963,11 @@ FGMultiplayMgr::update(double dt)
     //////////////////////////////////////////////////
     //  Process messages
     //////////////////////////////////////////////////
-	SGPropertyNode *player;
     switch (MsgHdr->MsgId) {
     case CHAT_MSG_ID:
       ProcessChatMsg(msgBuf, SenderAddress);
       break;
     case POS_DATA_ID:
-      // Add player node to multiplayer node on property tree
-	  /*if(!fgGetNode("multiplayer", true)->hasChild(MsgHdr->Callsign))
-	    player = fgGetNode("multiplayer", true)->addChild(MsgHdr->Callsign);*/
       ProcessPosMsg(msgBuf, SenderAddress, stamp);
       break;
     case UNUSABLE_POS_DATA_ID:
@@ -1290,128 +1282,11 @@ FGMultiplayMgr::ProcessPosMsg(const FGMultiplayMgr::MsgBuf& Msg,
     }
   }
 
-  // Add properties to property tree
-  /*SGPropertyNode *rootNode = fgGetNode("multiplayer", true);
-
-  SGPropertyNode *playerNode = NULL;
-  if(!rootNode->hasChild(MsgHdr->Callsign))
-	  playerNode = rootNode->addChild(MsgHdr->Callsign);
-  else
-	  playerNode = rootNode->getChild(MsgHdr->Callsign);
-
-  SGPropertyNode *positionNode = NULL;
-  if(!(playerNode->hasChild("position")))
-	  positionNode = playerNode->addChild("position");
-  else
-	  positionNode = playerNode->getChild("position");
-
-  SGPropertyNode *XNode = NULL;
-  if(!(positionNode->hasChild("X")))
-	  XNode = positionNode->addChild("X");
-  else
-	  XNode = positionNode->getChild("X");
-  XNode->setDoubleValue(motionInfo.position.x());
-
-  SGPropertyNode *YNode = NULL;
-  if(!(positionNode->hasChild("Y")))
-	  YNode = positionNode->addChild("Y");
-  else
-	  YNode = positionNode->getChild("Y");
-  YNode->setDoubleValue(motionInfo.position.y());
-
-  SGPropertyNode *ZNode = NULL;
-  if(!(positionNode->hasChild("Z")))
-	  ZNode = positionNode->addChild("Z");
-  else
-	  ZNode = positionNode->getChild("Z");
-  ZNode->setDoubleValue(motionInfo.position.z());
-
-  double latitude, longitude, altitude = 0;
-  Convert(motionInfo.position.x(), motionInfo.position.y(), motionInfo.position.z(),
-	  latitude, longitude, altitude);
-
-  SGPropertyNode *latNode = NULL;
-  if(!(positionNode->hasChild("latitude-deg")))
-	  latNode = positionNode->addChild("latitude-deg");
-  else
-	  latNode = positionNode->getChild("latitude-deg");
-  latNode->setDoubleValue(latitude);
-
-  SGPropertyNode *longNode = NULL;
-  if(!(positionNode->hasChild("longitude-deg")))
-	  longNode = positionNode->addChild("longitude-deg");
-  else
-	  longNode = positionNode->getChild("longitude-deg");
-  longNode->setDoubleValue(longitude);
-
-  SGPropertyNode *altNode = NULL;
-  if(!(positionNode->hasChild("altitude")))
-	  altNode = positionNode->addChild("altitude");
-  else
-	  altNode = positionNode->getChild("altitude");
-  altNode->setDoubleValue(altitude);
-
-  SGPropertyNode *speedNode = NULL;
-  if(!(playerNode->hasChild("speed")))
-	  speedNode = playerNode->addChild("speed");
-  else
-	  speedNode = playerNode->getChild("speed");
-
-  // Calculate speed
-  double speed = sqrt(pow(motionInfo.linearVel.x(), 2) + pow(motionInfo.linearVel.y(), 2)
-	  + pow(motionInfo.linearVel.z(), 2));
-  // Convert to knots from m/s?
-  speed *= 1.94384;
-  speedNode->setDoubleValue(speed);
-
-  SGPropertyNode *orientationNode = NULL;
-  if(!(playerNode->hasChild("orientation")))
-	  orientationNode = playerNode->addChild("orientation");
-  else
-	  orientationNode = playerNode->getChild("orientation");*/
-
-  double latitude, longitude, altitude = 0;
-  Convert(motionInfo.position.x(), motionInfo.position.y(), motionInfo.position.z(),
-	  latitude, longitude, altitude);
-
-  float angle;
-  SGVec3<float> axis;
-  motionInfo.orientation.getAngleAxis(angle, axis);
-
-  double speed = sqrt(pow(motionInfo.linearVel.x(), 2) + pow(motionInfo.linearVel.y(), 2)
-	  + pow(motionInfo.linearVel.z(), 2));
-  // Convert to knots from m/s?
-  speed *= 1.94384;
-
-  for(std::vector<Player *>::iterator it = m_players.begin(); it != m_players.end(); it++)
-  {
-	  if((*it)->callSign == MsgHdr->Callsign)
-	  {
-		  (*it)->callSign = MsgHdr->Callsign;
-		  (*it)->lat = latitude;
-		  (*it)->longitude = longitude;
-		  (*it)->alt = altitude;
-		  (*it)->speed = speed;
-		  (*it)->orientation = 0.0;
-	  }
-  }
-
  noprops:
   FGAIMultiplayer* mp = getMultiplayer(MsgHdr->Callsign);
   if (!mp)
     mp = addMultiplayer(MsgHdr->Callsign, PosMsg->Model);
   mp->addMotionInfo(motionInfo, stamp);
-  if(!playerExists(MsgHdr->Callsign))
-  {
-	  Player *player = new Player();
-	  player->callSign = MsgHdr->Callsign;
-	  player->lat = latitude;
-	  player->longitude = longitude;
-	  player->alt = altitude;
-	  player->speed = speed;
-	  player->orientation = 0.0;
-	  m_players.push_back(player);
-  }
 } // FGMultiplayMgr::ProcessPosMsg()
 //////////////////////////////////////////////////////////////////////
 
@@ -1529,3 +1404,22 @@ FGMultiplayMgr::findProperties()
       SG_LOG(SG_NETWORK, SG_DEBUG, "activating MP property:" << pNode->getPath());
     }
 }
+
+std::string FGMultiplayMgr::ConstructProducerMessage()
+  {
+	  std::ostringstream message_stream;
+	  MultiPlayerMap::iterator it = mMultiPlayerMap.begin();
+	  while(it != mMultiPlayerMap.end())
+	  {
+		  message_stream << "playername " << it->second->getCallSign() << "," <<
+			  "latitude-deg " << it->second->_getLatitude() << "," <<
+			  "longitude-deg " << it->second->_getLongitude() << "," <<
+			  "altitude " << it->second->_getAltitude() << "," <<
+			  "heading-deg " << it->second->_getHeading() << "," <<
+			  "airspeed-kt " << it->second->_getSpeed() << "\n\n";
+
+		  it++;
+	  }
+
+	  return message_stream.str();
+  }
