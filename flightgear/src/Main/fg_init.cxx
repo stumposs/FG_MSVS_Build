@@ -773,7 +773,10 @@ void fgCreateSubsystems() {
 	////////////////////////////////////////////////////////////////////
 	// Initialize the ActiveMQ Consumer Subsystem
 	////////////////////////////////////////////////////////////////////
-	//globals->add_subsystem("activemqconsumer", new ActiveMQConsumerSubsystem);
+	ActiveMQConsumerSubsystem *consumerSubsystem = new ActiveMQConsumerSubsystem();
+	globals->add_subsystem("activemqconsumer", consumerSubsystem);
+
+	consumerSubsystem->setProducerSubsystem(producerSubsystem);
 }
 
 void fgPostInitSubsystems()

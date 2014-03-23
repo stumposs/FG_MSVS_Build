@@ -32,10 +32,10 @@ class ActiveMQConsumer : public ExceptionListener,
 {
 public:
 	/*! Constructor
-	 * param brokerURI
-	 * param useTopic
-	 * param sessionTransacted
-	 * param waitMillis
+	 * @param brokerURI
+	 * @param useTopic
+	 * @param sessionTransacted
+	 * @param waitMillis
 	 */
 	ActiveMQConsumer(const string &brokerURI, bool useTopic = false, bool sessionTransacted = false,
 		int waitMillis = 30000) : 
@@ -50,11 +50,13 @@ public:
 		m_useTopic = useTopic;
 		m_sessionTransacted = sessionTransacted;
 		m_brokerURI = brokerURI;
+
+		m_producerSubsystem = NULL;
 	}
 
 	/*! Destructor
 	*/
-	virtual ~ActiveMQConsumer() {}
+	virtual ~ActiveMQConsumer() {cleanup();}
 
 	void close() {cleanup();}
 
@@ -88,11 +90,11 @@ public:
 			// Create the destination (Topic or Queue)
 			if(m_useTopic)
 			{
-				m_destination = m_session->createTopic("TEST.FOO");
+				m_destination = m_session->createTopic("MESSAGE_INTERVAL");
 			}
 			else
 			{
-				m_destination = m_session->createQueue("TEST.FOO");
+				m_destination = m_session->createQueue("MESSAGE_INTERVAL");
 			}
 
 			// Create a MessageConsumer from the Session to the Topic or Queue
@@ -131,6 +133,11 @@ public:
 			if(textMessage != NULL)
 			{
 				text = textMessage->getText();
+				if(m_producerSubsystem != NULL)
+				{
+					double interval = atof(text.c_str());
+					m_producerSubsystem->setMessageRate(interval * 1000);
+				}
 			}
 			else
 			{
@@ -153,6 +160,8 @@ public:
 		//m_doneLatch.countDown();
 	}
 
+	void setProducerSubsystem(ActiveMQProducerSubsystem *ps) {m_producerSubsystem = ps;}
+
 	// If something bad happens you see it here as this class is also been
 	// registered as an ExceptionListener with the connection.
 	virtual void onException(const CMSException& ex AMQCPP_UNUSED)
@@ -173,6 +182,9 @@ private:
 	bool			m_useTopic;
 	bool			m_sessionTransacted;
 	string			m_brokerURI;
+
+	//! Producer subystem so we can change the message rate
+	ActiveMQProducerSubsystem *m_producerSubsystem;
 
 	// Disable copy constructor and operator = overload
 	ActiveMQConsumer(const ActiveMQConsumer&);

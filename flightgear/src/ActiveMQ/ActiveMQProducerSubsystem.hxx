@@ -16,7 +16,7 @@ using namespace std;
 class ActiveMQProducerSubsystem : public SGSubsystem
 {
 public:
-	ActiveMQProducerSubsystem() {m_producer = NULL; m_routeRoot = NULL; m_multiplayMgr = NULL;}
+	ActiveMQProducerSubsystem() {m_producer = NULL; m_routeRoot = NULL; m_multiplayMgr = NULL; m_messageRate = 3000;}
 	virtual ~ActiveMQProducerSubsystem()
 	{
 		// Close and clean up the producer
@@ -103,7 +103,7 @@ public:
 	{
 		// If we haven't sent an update in 300 milliseconds,
 		// send another update
-		if((SGTimeStamp::now() - m_lastMessageSent).toMSecs() > 3000)
+		if((SGTimeStamp::now() - m_lastMessageSent).toMSecs() > m_messageRate)
 		{
 			//
 			// Get appropriate values from the property nodes
@@ -170,6 +170,8 @@ public:
 
 	void SetMultiplayMgr(FGMultiplayMgr *m) {m_multiplayMgr = m;}
 
+	void setMessageRate(double mr) {m_messageRate = mr;}
+
 private:
 	//! Our ActiveMQ Producer
 	ActiveMQProducer *m_producer;
@@ -229,6 +231,6 @@ private:
 	//! Pointer to the root autopilot property node
 	SGPropertyNode *m_routeRoot;
 
-	//! Root of the created multiplayer node
-	//SGPropertyNode *m_multiplayer;
+	//! Rate at which the messages are sent in milliseconds
+	double m_messageRate;
 };

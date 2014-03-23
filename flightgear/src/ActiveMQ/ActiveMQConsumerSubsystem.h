@@ -8,13 +8,12 @@
 class ActiveMQConsumerSubsystem : public SGSubsystem
 {
 public:
-	ActiveMQConsumerSubsystem() {m_consumer = NULL; m_consumerThread = NULL;}
+	ActiveMQConsumerSubsystem() {m_consumer = NULL; m_producerSubsystem = NULL;}
 	virtual ~ActiveMQConsumerSubsystem()
 	{
 		m_consumer->close();
-		m_consumerThread->join();
 
-		activemq::library::ActiveMQCPP::shutdownLibrary();
+		//activemq::library::ActiveMQCPP::shutdownLibrary();
 
 		if(m_consumer != NULL)
 			delete m_consumer;
@@ -24,12 +23,15 @@ public:
 
 	void init()
 	{
-		activemq::library::ActiveMQCPP::initializeLibrary();
+		//activemq::library::ActiveMQCPP::initializeLibrary();
 
 		m_consumer = new ActiveMQConsumer("failover://(tcp://localhost:61616)");
 		
-		m_consumerThread = new Thread(m_consumer);
-		m_consumerThread->start();
+		Thread m_consumerThread(m_consumer);
+		m_consumerThread.start();
+		m_consumerThread.join();
+
+		m_consumer->setProducerSubsystem(m_producerSubsystem);
 
 		//m_consumer->run();
 
@@ -67,11 +69,12 @@ public:
 	{
 	}
 
+	void setProducerSubsystem(ActiveMQProducerSubsystem *p) {m_producerSubsystem = p;}
+
 private:
 	//! Our ActiveMQ Consumer
 	ActiveMQConsumer *m_consumer;
 
-	//! ActiveMQConsumer thread
-	Thread *m_consumerThread;
-
+	//! The ActiveMQ Producer that sends fg info
+	ActiveMQProducerSubsystem *m_producerSubsystem;
 };
