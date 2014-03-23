@@ -142,33 +142,6 @@ public:
 			message_stream << "\n";
 
 			// Get info for mutliplayer message
-			/*SGPropertyNode *multiplayerRoot = fgGetNode("multiplayer", true);
-			if(multiplayerRoot->nChildren() > 0)
-			{
-				std::string playerName = "";
-				double latitude = 0.0;
-				double longitude = 0.0;
-				double alt = 0.0;
-				double speed = 0.0;
-				float angle = 0.0;
-				for(int i = 0; i < multiplayerRoot->nChildren(); i++)
-				{
-					SGPropertyNode *n = multiplayerRoot->getChild(i);
-					playerName = n->getNameString();
-					latitude = n->getChild("position")->getChild("latitude-deg")->getDoubleValue();
-					longitude = n->getChild("position")->getChild("longitude-deg")->getDoubleValue();
-					alt = n->getChild("position")->getChild("altitude")->getDoubleValue();
-					angle = n->getChild("orientation")->getDoubleValue();
-					speed = n->getChild("speed")->getDoubleValue();
-					message_stream << "playername " << playerName << ",";
-					message_stream << "latitude-deg" << " " << latitude << ",";
-					message_stream << "longitude-deg" << " " << longitude << ",";
-					message_stream << "altitude" << " " << alt << ",";
-					message_stream << "heading-deg" << " " << angle << ",";
-					message_stream << "airspeed-kt" << " " << speed << "\n";
-					message_stream << "\n";
-				}
-			}*/
 			message_stream << m_multiplayMgr->ConstructProducerMessage();
 
 			// Environment info

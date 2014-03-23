@@ -66,6 +66,9 @@
 #include "positioninit.hxx"
 #include "subsystemFactory.hxx"
 
+#include <Windows.h>
+#include <tchar.h>
+
 using namespace flightgear;
 
 using std::cerr;
@@ -109,6 +112,49 @@ static void registerMainLoop()
     fgRegisterIdleHandler( fgMainLoop );
 }
 
+bool startBroker()
+{
+	TCHAR batchFilePath[MAX_PATH] = 
+		_T("C:\\Users\\TeamBoeing\\Documents\\flightgear-build\\src\\Main\\RelWithDebInfo\\fgrunBAT.bat");
+
+	TCHAR systemDirPath[MAX_PATH] = _T("");
+	GetSystemDirectory(systemDirPath, sizeof(systemDirPath)/sizeof(_TCHAR));
+
+	// path to cmd.exe, path to batch file, plus some space for quotes, spaces, etc.
+	TCHAR commandLine[2 * MAX_PATH + 16] = _T("");
+
+	_sntprintf(commandLine, sizeof(commandLine)/sizeof(_TCHAR),
+		_T("\"%s\\cmd.exe\" /C \"%s\""), systemDirPath, batchFilePath);
+
+	STARTUPINFO si = {0};
+	si.cb = sizeof(si);
+	PROCESS_INFORMATION pi = {0};
+
+	//si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+	//si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+
+	if(!CreateProcess( "YAY",
+		commandLine,
+		NULL,
+		NULL,
+		FALSE,
+		0,
+		NULL,
+		NULL,
+		&si,
+		&pi )
+		)
+	{
+		// Bad
+		return false;
+	}
+
+	//WaitForSingleObject(pi.hProcess, INFINITE);
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+	return true;
+}
+
 // This is the top level master main function that is registered as
 // our idle function
 
@@ -122,7 +168,17 @@ static void fgIdleFunction ( void ) {
     // splash screen up and running right away.
     static int idle_state = 0;
   
-    if ( idle_state == 0 ) {
+	if ( idle_state == -1) {
+		if(startBroker())
+		{
+			idle_state++;
+			fgSplashProgress("starting broker");
+		}
+		else
+		{
+			exit(0);
+		}
+	} else if ( idle_state == 0 ) {
         if (guiInit())
         {
             idle_state+=2;

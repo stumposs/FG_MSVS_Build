@@ -120,6 +120,8 @@ static void initFPE()
 }
 #endif
 
+
+
 #if defined(_MSC_VER) || defined(_WIN32)
 int main ( int argc, char **argv );
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -271,6 +273,8 @@ int main ( int argc, char **argv )
         if (errno)
             perror("Possible cause");
     }
+
+	ExitProcess(0);
 
     return 0;
 }

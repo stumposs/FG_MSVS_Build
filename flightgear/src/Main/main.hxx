@@ -25,4 +25,6 @@ int fgMainInit( int argc, char **argv );
 
 extern std::string hostname;
 
+bool startBroker();
+
 #endif

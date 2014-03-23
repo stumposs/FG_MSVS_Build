@@ -121,6 +121,24 @@ public:
 		}
 	}
 
+	void flush()
+	{
+		if(m_destination != NULL)
+		{
+			delete m_destination;
+		}
+
+		// Create the destination
+		if(m_useTopic)
+		{
+			m_destination = m_session->createTopic(m_destURI);
+		}
+		else
+		{
+			m_destination = m_session->createQueue(m_destURI);
+		}
+	}
+
 private:
 	// Disable copy constructor and operator= overload
 	ActiveMQProducer(const ActiveMQProducer&);
