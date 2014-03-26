@@ -109,7 +109,7 @@ public:
 			m_latch.countDown();
 
 			// Wait while asynchronous messages come in
-			m_doneLatch.await(m_waitMillis);
+			//m_doneLatch.await(m_waitMillis);
 		}
 		catch(CMSException& e)
 		{

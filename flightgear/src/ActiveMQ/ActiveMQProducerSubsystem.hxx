@@ -16,7 +16,7 @@ using namespace std;
 class ActiveMQProducerSubsystem : public SGSubsystem
 {
 public:
-	ActiveMQProducerSubsystem() {m_producer = NULL; m_routeRoot = NULL; m_multiplayMgr = NULL; m_messageRate = 3000;}
+	ActiveMQProducerSubsystem() {m_producer = NULL; m_multiplayMgr = NULL; m_messageRate = 3000;}
 	virtual ~ActiveMQProducerSubsystem()
 	{
 		// Close and clean up the producer
@@ -28,9 +28,7 @@ public:
 
 		m_producer = NULL;
 
-		//delete m_producerThread;
-
-		activemq::library::ActiveMQCPP::shutdownLibrary();
+		//activemq::library::ActiveMQCPP::shutdownLibrary();
 	}
 
 	void ActiveMQProducerSubsystem::init()
@@ -44,11 +42,7 @@ public:
 		// Need to atleast start the producer in its own thread
 		Thread producerThread(m_producer);
 		producerThread.start();
-		//m_producer->run();
 		producerThread.join();
-
-		// Add the multiplayer parent node
-		//m_multiplayer = fgGetNode("/", true)->addChild("multiplayer");
 
 		 // get a pointer to the node that holds the desired property
 		m_lat = fgGetNode("position/latitude-deg", true);
@@ -62,10 +56,8 @@ public:
 		m_temperatureF = fgGetNode("environment/temperature-degf", true);
 		m_windSpeedKnots = fgGetNode("environment/wind-speed-kt", true);
 		m_windHeading = fgGetNode("environment/wind-from-heading-deg", true);
-		m_weatherScenario = fgGetNode("environment/weather-scenario", true);
-
-		// Get the route root property node
-		m_routeRoot = fgGetNode("autopilot/route-manager", true);
+		m_stationID = fgGetNode("environment/metar/station-id", true);
+		m_pressure = fgGetNode("environment/metar/pressure-inhg", true);
 
 		m_lastMessageSent = SGTimeStamp::now();
 	}
@@ -83,11 +75,11 @@ public:
 		// Create the producer
 		m_producer = new ActiveMQProducer("failover://(tcp://localhost:61616)", "TEST.FOO", false);
 
+		// FlightGear uses its own threads so...
 		// Libraries that the activemq producer uses are not thread safe
-		// Need to atleast start the producer in its own thread
+		// Need to atleast start the producer in its own activemq thread
 		Thread producerThread(m_producer);
 		producerThread.start();
-		//m_producer->run();
 		producerThread.join();
 	}
 
@@ -101,7 +93,7 @@ public:
 
 	void ActiveMQProducerSubsystem::update(double dt)
 	{
-		// If we haven't sent an update in 300 milliseconds,
+		// If we haven't sent an update in x milliseconds,
 		// send another update
 		if((SGTimeStamp::now() - m_lastMessageSent).toMSecs() > m_messageRate)
 		{
@@ -128,6 +120,9 @@ public:
 			double fuel_percentLevel = m_percentFuelLevel->getDoubleValue();
 			m_totalFuelCapacity = fuel_total / fuel_percentLevel;
 
+			// Pressure
+			double pressure = m_pressure->getDoubleValue();
+
 			// Format the message
 			std::ostringstream message_stream;
 			message_stream << "playername Player" << ",";
@@ -148,13 +143,14 @@ public:
 			double tempF = m_temperatureF->getDoubleValue();
 			double windSpeed = m_windSpeedKnots->getDoubleValue();
 			double windHeading = m_windHeading->getDoubleValue();
-			std::string weatherScenario = m_weatherScenario->getStringValue();
+			std::string stationID = m_stationID->getStringValue();
 
 			message_stream << "Environment,";
+			message_stream << "station-id" << " " <<stationID << ",";
 			message_stream << "temperature-degf" << " " << tempF << ",";
 			message_stream << "wind-speed-kt" << " " << windSpeed << ",";
 			message_stream << "wind-from-heading-deg" << " " << windHeading << ",";
-			message_stream << "weather-scenario" << " " << weatherScenario << "\n";
+			message_stream << "pressure" << " "<< pressure << "\n";
 			message_stream << "\n";
 
 			message_stream << "END";
@@ -178,9 +174,6 @@ private:
 
 	//! The multiplaymgr class
 	FGMultiplayMgr *m_multiplayMgr;
-
-	//! ActiveMQProducer thread
-	//Thread *m_producerThread;
 
 	//! Timer
 	SGTimeStamp m_lastMessageSent;
@@ -225,11 +218,11 @@ private:
 	//! Pointer to the property node that holds the wind direction in degrees
 	SGPropertyNode *m_windHeading;
 
-	//! Pointer to the property node that holds the weather scenario (Fair, Rain, Snow, etc.)
-	SGPropertyNode *m_weatherScenario;
+	//! Pointer to the property node that holds the station id
+	SGPropertyNode *m_stationID;
 
-	//! Pointer to the root autopilot property node
-	SGPropertyNode *m_routeRoot;
+	//! Pointer to the property node that holds the pressure in hg
+	SGPropertyNode *m_pressure;
 
 	//! Rate at which the messages are sent in milliseconds
 	double m_messageRate;

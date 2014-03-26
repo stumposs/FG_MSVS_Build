@@ -13,7 +13,7 @@ public:
 	{
 		m_consumer->close();
 
-		//activemq::library::ActiveMQCPP::shutdownLibrary();
+		activemq::library::ActiveMQCPP::shutdownLibrary();
 
 		if(m_consumer != NULL)
 			delete m_consumer;
@@ -30,10 +30,9 @@ public:
 		Thread m_consumerThread(m_consumer);
 		m_consumerThread.start();
 		m_consumerThread.join();
+		//m_consumer->run();
 
 		m_consumer->setProducerSubsystem(m_producerSubsystem);
-
-		//m_consumer->run();
 
 		// Wait for the consumer to indicate that it's ready to go
 		m_consumer->waitUntilReady();
